@@ -1,59 +1,83 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import Link from "next/link";
 
-export default function VerifyTicketPage() {
-  const { ticketId } = useParams();
-  const [result, setResult] = useState<any>(null);
+export default function StorefrontPage() {
+  const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!ticketId) return;
-    
-    const verifyTicket = async () => {
+    const fetchEvents = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tickets/${ticketId}/check-in`, {
-          method: "POST"
-        });
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/events`);
         const data = await res.json();
-        setResult(data);
+        setEvents(data);
       } catch (error) {
-        setResult({ success: false, message: "Network error contacting server." });
+        console.error("Failed to fetch events", error);
       } finally {
         setLoading(false);
       }
     };
     
-    verifyTicket();
-  }, [ticketId]);
-
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white text-xl animate-pulse">Verifying Ticket...</div>;
-  }
+    fetchEvents();
+  }, []);
 
   return (
-    <main className={`min-h-screen flex flex-col items-center justify-center p-6 text-white transition-colors duration-300 ${result?.success ? 'bg-green-600' : 'bg-red-600'}`}>
-      <div className="bg-black/20 p-8 rounded-3xl backdrop-blur-md text-center max-w-sm w-full shadow-2xl border border-white/20">
-        <div className="text-8xl mb-6">
-          {result?.success ? "✅" : "❌"}
+    <main className="min-h-screen bg-gray-50 font-sans">
+      <div className="bg-gray-900 text-white pt-24 pb-32 px-6 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-900/40 via-black to-orange-900/20 mix-blend-multiply"></div>
+        <div className="max-w-5xl mx-auto relative z-10 text-center">
+          <h1 className="text-5xl md:text-7xl font-black tracking-tighter mb-6">Discover Local <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-500">Experiences</span></h1>
+          <p className="text-xl text-gray-400 font-medium max-w-2xl mx-auto">Book exclusive tickets to workshops, meetups, and events happening in your city.</p>
         </div>
-        
-        <h1 className="text-3xl font-extrabold mb-2 uppercase tracking-wide">
-          {result?.message}
-        </h1>
-        
-        {result?.buyerName && (
-          <div className="mt-8 pt-6 border-t border-white/20 text-lg font-medium">
-            <p className="text-white/80 text-sm uppercase tracking-wider mb-1">Attendee</p>
-            <p className="text-2xl mb-4">{result.buyerName}</p>
-            
-            {result.eventTitle && (
-              <>
-                <p className="text-white/80 text-sm uppercase tracking-wider mb-1">Event</p>
-                <p className="opacity-90">{result.eventTitle}</p>
-              </>
-            )}
+      </div>
+
+      <div className="max-w-5xl mx-auto px-6 -mt-16 relative z-20 pb-24">
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <div className="w-12 h-12 border-4 border-fuchsia-200 border-t-fuchsia-600 rounded-full animate-spin"></div>
+          </div>
+        ) : events.length === 0 ? (
+          <div className="bg-white rounded-3xl shadow-xl p-12 text-center">
+            <h3 className="text-2xl font-bold text-gray-800">No events found</h3>
+            <p className="text-gray-500 mt-2">Check back later or run the /api/seed endpoint.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {events.map((event) => {
+              const eventDate = new Date(event.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+              
+              return (
+                <div key={event.id} className="bg-white rounded-[2rem] overflow-hidden shadow-xl shadow-gray-200/50 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 group flex flex-col">
+                  <div className="h-48 bg-gradient-to-br from-violet-100 to-orange-50 relative p-6 flex flex-col justify-end">
+                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur text-gray-900 text-xs font-black uppercase tracking-wider px-3 py-1.5 rounded-full">
+                      {eventDate}
+                    </div>
+                    <div className="absolute top-4 right-4 bg-white/90 backdrop-blur text-fuchsia-600 text-xs font-black px-3 py-1.5 rounded-full">
+                      ₹{event.ticketPrice}
+                    </div>
+                  </div>
+                  
+                  <div className="p-6 sm:p-8 flex-grow flex flex-col">
+                    <h2 className="text-2xl font-black text-gray-900 mb-3 leading-tight">{event.title}</h2>
+                    <p className="text-gray-500 font-medium text-sm mb-6 flex-grow">{event.description}</p>
+                    
+                    <div className="border-t border-gray-100 pt-6 mt-auto">
+                      <Link 
+                        href={`/checkout?eventId=${event.id}`}
+                        className="block w-full text-center text-white bg-gray-900 hover:bg-black font-black rounded-xl text-base px-5 py-4 transition-colors"
+                      >
+                        Buy Tickets
+                      </Link>
+                      <p className="text-center text-xs text-gray-400 font-semibold mt-3 uppercase tracking-wider">
+                        {event.totalSeats} seats remaining
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
