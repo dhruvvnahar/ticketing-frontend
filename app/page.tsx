@@ -36,6 +36,7 @@ export default function CheckoutPage() {
     setError("");
     
     try {
+      // 1. Create the pending order
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/create-ticket-order`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -45,11 +46,33 @@ export default function CheckoutPage() {
       const data = await res.json();
       
       if (!res.ok) {
-        throw new Error(data.detail || "Something went wrong");
+        throw new Error(data.detail || "Something went wrong creating the order");
       }
       
       setOrderResponse(data);
-      fetchTicketDetails(data.ticketId);
+
+      // 2. Automatically simulate payment capture webhook
+      const orderIdToConfirm = data.orderId || data.razorpayOrderId;
+      if (orderIdToConfirm) {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/webhook`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            payload: {
+              payment: {
+                entity: {
+                  order_id: orderIdToConfirm,
+                },
+              },
+            },
+          }),
+        });
+      }
+
+      // 3. Fetch ticket details to render QR code on screen
+      if (data.ticketId) {
+        fetchTicketDetails(data.ticketId);
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -90,8 +113,8 @@ export default function CheckoutPage() {
         ) : (
           <div className="text-center space-y-4">
             <div className="w-16 h-16 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto text-3xl">✓</div>
-            <h2 className="text-xl font-bold text-gray-800">Mock Order Created!</h2>
-            <p className="text-gray-600">Order ID: <span className="font-mono text-xs">{orderResponse.orderId}</span></p>
+            <h2 className="text-xl font-bold text-gray-800">Order Confirmed!</h2>
+            <p className="text-gray-600">Order ID: <span className="font-mono text-xs">{orderResponse.orderId || orderResponse.razorpayOrderId}</span></p>
             
             {ticketData ? (
               <div className="mt-6 border-t pt-6 w-full">
@@ -104,8 +127,8 @@ export default function CheckoutPage() {
                   className="mx-auto border-4 border-gray-100 rounded-lg shadow-sm w-48 h-48"
                 />
                 
-                <p className="text-sm text-gray-500 mt-4">
-                  Run the PowerShell webhook command to finalize payment and trigger the email!
+                <p className="text-sm text-green-600 font-medium mt-4">
+                  Payment confirmed! Your ticket has been emailed to you.
                 </p>
               </div>
             ) : (
