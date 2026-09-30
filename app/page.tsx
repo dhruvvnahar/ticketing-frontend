@@ -1,69 +1,121 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState } from "react";
+
+export default function CheckoutPage() {
+  const [formData, setFormData] = useState({
+    buyer_name: "",
+    buyer_email: "",
+    buyer_phone: "",
+    event_id: "", 
+  });
+  const [orderResponse, setOrderResponse] = useState<any>(null);
+  const [ticketData, setTicketData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const fetchTicketDetails = async (ticketId: string) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tickets/${ticketId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setTicketData(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch ticket:", error);
+    }
+  };
+
+  const handleCheckout = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/create-ticket-order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.detail || "Something went wrong");
+      }
+      
+      setOrderResponse(data);
+      fetchTicketDetails(data.ticketId);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <main className="min-h-screen bg-gray-50 p-6 flex flex-col items-center justify-center">
+      <div className="max-w-md w-full bg-white rounded-xl shadow-md p-8">
+        <h1 className="text-2xl font-bold text-gray-800 mb-6">Complete Purchase</h1>
+        
+        {!orderResponse ? (
+          <form onSubmit={handleCheckout} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Event ID (from /api/seed)</label>
+              <input required type="text" name="event_id" value={formData.event_id} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Full Name</label>
+              <input required type="text" name="buyer_name" value={formData.buyer_name} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Email Address</label>
+              <input required type="email" name="buyer_email" value={formData.buyer_email} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+              <input required type="tel" name="buyer_phone" value={formData.buyer_phone} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
+            </div>
+            
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+            
+            <button disabled={loading} type="submit" className="w-full bg-black text-white font-bold py-3 rounded-lg mt-4 disabled:opacity-50">
+              {loading ? "Processing..." : "Pay Now"}
+            </button>
+          </form>
+        ) : (
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto text-3xl">✓</div>
+            <h2 className="text-xl font-bold text-gray-800">Mock Order Created!</h2>
+            <p className="text-gray-600">Order ID: <span className="font-mono text-xs">{orderResponse.orderId}</span></p>
+            
+            {ticketData ? (
+              <div className="mt-6 border-t pt-6 w-full">
+                <h3 className="text-xl font-semibold mb-2">{ticketData.event_title}</h3>
+                <p className="text-gray-600 mb-4">Admit One: {ticketData.buyer_name}</p>
+                
+                <img 
+                  src={ticketData.qr_code_image} 
+                  alt="Ticket QR Code" 
+                  className="mx-auto border-4 border-gray-100 rounded-lg shadow-sm w-48 h-48"
+                />
+                
+                <p className="text-sm text-gray-500 mt-4">
+                  Run the PowerShell webhook command to finalize payment and trigger the email!
+                </p>
+              </div>
+            ) : (
+              <div className="mt-6 border-t pt-6 w-full">
+                <p className="text-gray-500 animate-pulse">Generating your secure ticket...</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </main>
   );
 }
