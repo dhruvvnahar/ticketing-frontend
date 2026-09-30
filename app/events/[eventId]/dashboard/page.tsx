@@ -5,10 +5,11 @@ import { useParams } from "next/navigation";
 
 export default function EventDashboardPage() {
   const params = useParams();
-  const eventId = params.eventId;
+  const eventId = params?.eventId;
 
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     if (!eventId) return;
@@ -16,17 +17,18 @@ export default function EventDashboardPage() {
     const fetchDashboard = async () => {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/events/${eventId}/tickets`);
+        if (!res.ok) throw new Error("Failed to fetch");
         const data = await res.json();
         setDashboardData(data);
       } catch (err) {
         console.error("Failed to load dashboard data", err);
+        setError(true);
       } finally {
         setLoading(false);
       }
     };
 
     fetchDashboard();
-    // Poll every 5 seconds for live gate updates
     const interval = setInterval(fetchDashboard, 5000);
     return () => clearInterval(interval);
   }, [eventId]);
@@ -39,7 +41,18 @@ export default function EventDashboardPage() {
     );
   }
 
-  const { totalTickets, checkedInCount, tickets } = dashboardData || { totalTickets: 0, checkedInCount: 0, tickets: [] };
+  if (error || !dashboardData) {
+    return (
+      <main className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-6">
+        <div className="bg-gray-800 border border-gray-700 p-8 rounded-3xl text-center max-w-md w-full">
+          <h2 className="text-xl font-bold text-red-400 mb-2">Could not load dashboard</h2>
+          <p className="text-gray-400 text-sm">Please check if your backend is online and the event ID is correct.</p>
+        </div>
+      </main>
+    );
+  }
+
+  const { totalTickets = 0, checkedInCount = 0, tickets = [] } = dashboardData;
   const percentage = totalTickets > 0 ? Math.round((checkedInCount / totalTickets) * 100) : 0;
 
   return (
