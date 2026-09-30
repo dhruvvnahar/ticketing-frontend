@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
 
-export default function EventDashboardPage() {
-  const params = useParams();
+export default function EventDashboardPage({ params }: { params: { eventId: string } }) {
   const eventId = params?.eventId;
 
   const [dashboardData, setDashboardData] = useState<any>(null);
@@ -60,7 +58,7 @@ export default function EventDashboardPage() {
       <div className="max-w-4xl mx-auto space-y-8">
         <div>
           <h1 className="text-3xl font-black tracking-tight">Gate Control Dashboard</h1>
-          <p className="text-gray-400 text-sm mt-1">Live entry tracking and attendee status</p>
+          <p className="text-gray-400 text-sm mt-1">Live entry tracking and attendee status (Event ID: {eventId})</p>
         </div>
 
         {/* Metrics Cards */}
