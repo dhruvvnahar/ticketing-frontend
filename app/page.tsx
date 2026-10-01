@@ -6,15 +6,29 @@ import Link from "next/link";
 export default function StorefrontPage() {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/events`);
+        if (!res.ok) throw new Error("Failed to fetch from backend");
+        
         const data = await res.json();
-        setEvents(data);
-      } catch (error) {
-        console.error("Failed to fetch events", error);
+        
+        // Safely check if data is an array to prevent .map() crashes
+        if (Array.isArray(data)) {
+          setEvents(data);
+          setError(false);
+        } else {
+          console.error("Backend returned unexpected data structure:", data);
+          setEvents([]);
+          setError(true);
+        }
+      } catch (err) {
+        console.error("Failed to fetch events", err);
+        setEvents([]);
+        setError(true);
       } finally {
         setLoading(false);
       }
@@ -37,6 +51,11 @@ export default function StorefrontPage() {
         {loading ? (
           <div className="flex justify-center py-20">
             <div className="w-12 h-12 border-4 border-fuchsia-200 border-t-fuchsia-600 rounded-full animate-spin"></div>
+          </div>
+        ) : error ? (
+          <div className="bg-white rounded-3xl shadow-xl p-12 text-center border border-red-100">
+            <h3 className="text-2xl font-bold text-red-600">Connection Error</h3>
+            <p className="text-gray-500 mt-2">Could not connect to the backend server. Please wait a moment and refresh the page.</p>
           </div>
         ) : events.length === 0 ? (
           <div className="bg-white rounded-3xl shadow-xl p-12 text-center">
