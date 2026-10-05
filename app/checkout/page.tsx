@@ -8,11 +8,11 @@ function CheckoutContent() {
   const eventIdFromUrl = searchParams.get("eventId") || "";
 
   const [formData, setFormData] = useState({
-    buyer_name: "",
-    buyer_email: "",
-    buyer_phone: "",
-    event_id: eventIdFromUrl, // Automatically set from the URL!
-  });
+  buyerName: "",
+  buyerEmail: "",
+  buyerPhone: "",
+  eventId: eventIdFromUrl,
+});
   const [orderResponse, setOrderResponse] = useState<any>(null);
   const [ticketData, setTicketData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -39,7 +39,7 @@ function CheckoutContent() {
     setLoading(true);
     setError("");
     
-    if (!formData.event_id) {
+    if (!formData.eventId) {
       setError("No Event ID found. Please start from the home page.");
       setLoading(false);
       return;
@@ -104,17 +104,17 @@ function CheckoutContent() {
               {/* Notice the Event ID field is completely gone from the UI! */}
               <div>
                 <label className="block text-xs font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-fuchsia-600 uppercase tracking-widest mb-1.5">Full Name</label>
-                <input required type="text" name="buyer_name" value={formData.buyer_name} onChange={handleChange} 
+                <input required type="text" name="buyer_name" value={formData.buyerName} onChange={handleChange} 
                   className="w-full bg-gray-50/50 border border-gray-200 text-gray-900 rounded-2xl focus:bg-white focus:ring-4 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 block p-4 outline-none font-medium" placeholder="Jane Doe" />
               </div>
               <div>
                 <label className="block text-xs font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-fuchsia-600 uppercase tracking-widest mb-1.5">Email Address</label>
-                <input required type="email" name="buyer_email" value={formData.buyer_email} onChange={handleChange} 
+                <input required type="email" name="buyer_email" value={formData.buyerEmail} onChange={handleChange} 
                   className="w-full bg-gray-50/50 border border-gray-200 text-gray-900 rounded-2xl focus:bg-white focus:ring-4 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 block p-4 outline-none font-medium" placeholder="jane@example.com" />
               </div>
               <div>
                 <label className="block text-xs font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-fuchsia-600 uppercase tracking-widest mb-1.5">Phone Number</label>
-                <input required type="tel" name="buyer_phone" value={formData.buyer_phone} onChange={handleChange} 
+                <input required type="tel" name="buyer_phone" value={formData.buyerPhone} onChange={handleChange} 
                   className="w-full bg-gray-50/50 border border-gray-200 text-gray-900 rounded-2xl focus:bg-white focus:ring-4 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 block p-4 outline-none font-medium" placeholder="+1 (555) 000-0000" />
               </div>
               
