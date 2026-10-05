@@ -8,11 +8,11 @@ function CheckoutContent() {
   const eventIdFromUrl = searchParams.get("eventId") || "";
 
   const [formData, setFormData] = useState({
-  buyerName: "",
-  buyerEmail: "",
-  buyerPhone: "",
-  eventId: eventIdFromUrl,
-});
+    buyerName: "",
+    buyerEmail: "",
+    buyerPhone: "",
+    eventId: eventIdFromUrl,
+  });
   const [orderResponse, setOrderResponse] = useState<any>(null);
   const [ticketData, setTicketData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -103,20 +103,20 @@ function CheckoutContent() {
             <form onSubmit={handleCheckout} className="space-y-5">
               {/* Notice the Event ID field is completely gone from the UI! */}
               <div>
-                <label className="block text-xs font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-fuchsia-600 uppercase tracking-widest mb-1.5">Full Name</label>
-                <input required type="text" name="buyer_name" value={formData.buyerName} onChange={handleChange} 
-                  className="w-full bg-gray-50/50 border border-gray-200 text-gray-900 rounded-2xl focus:bg-white focus:ring-4 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 block p-4 outline-none font-medium" placeholder="Jane Doe" />
-              </div>
-              <div>
-                <label className="block text-xs font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-fuchsia-600 uppercase tracking-widest mb-1.5">Email Address</label>
-                <input required type="email" name="buyer_email" value={formData.buyerEmail} onChange={handleChange} 
-                  className="w-full bg-gray-50/50 border border-gray-200 text-gray-900 rounded-2xl focus:bg-white focus:ring-4 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 block p-4 outline-none font-medium" placeholder="jane@example.com" />
-              </div>
-              <div>
-                <label className="block text-xs font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-fuchsia-600 uppercase tracking-widest mb-1.5">Phone Number</label>
-                <input required type="tel" name="buyer_phone" value={formData.buyerPhone} onChange={handleChange} 
-                  className="w-full bg-gray-50/50 border border-gray-200 text-gray-900 rounded-2xl focus:bg-white focus:ring-4 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 block p-4 outline-none font-medium" placeholder="+1 (555) 000-0000" />
-              </div>
+  <label className="block text-xs font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-fuchsia-600 uppercase tracking-widest mb-1.5">Full Name</label>
+  <input required type="text" name="buyerName" value={formData.buyerName} onChange={handleChange} 
+    className="w-full bg-gray-50/50 border border-gray-200 text-gray-900 rounded-2xl focus:bg-white focus:ring-4 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 block p-4 outline-none font-medium" placeholder="Jane Doe" />
+</div>
+<div>
+  <label className="block text-xs font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-fuchsia-600 uppercase tracking-widest mb-1.5">Email Address</label>
+  <input required type="email" name="buyerEmail" value={formData.buyerEmail} onChange={handleChange} 
+    className="w-full bg-gray-50/50 border border-gray-200 text-gray-900 rounded-2xl focus:bg-white focus:ring-4 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 block p-4 outline-none font-medium" placeholder="jane@example.com" />
+</div>
+<div>
+  <label className="block text-xs font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-fuchsia-600 uppercase tracking-widest mb-1.5">Phone Number</label>
+  <input required type="tel" name="buyerPhone" value={formData.buyerPhone} onChange={handleChange} 
+    className="w-full bg-gray-50/50 border border-gray-200 text-gray-900 rounded-2xl focus:bg-white focus:ring-4 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 block p-4 outline-none font-medium" placeholder="+1 (555) 000-0000" />
+</div>
               
               {error && (<div className="bg-red-50 text-red-600 text-sm p-4 rounded-2xl border border-red-100 font-bold">⚠️ {error}</div>)}
               
