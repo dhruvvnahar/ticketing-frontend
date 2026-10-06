@@ -105,22 +105,26 @@ export default function StorefrontPage() {
                     <p className="text-gray-500 font-medium text-sm mb-6 flex-grow">{event.description}</p>
                     
                     <div className="border-t border-gray-100 pt-6 mt-auto">
-  {((event.capacity || 100) - (event.ticketsSold || 0)) <= 0 ? (
-    <button disabled className="block w-full text-center text-gray-400 bg-gray-200 font-black rounded-xl text-base px-5 py-4 cursor-not-allowed uppercase tracking-wider">
-      Sold Out
-    </button>
-  ) : (
-    <Link 
-      href={`/checkout?eventId=${event.id}`}
-      className="block w-full text-center text-white bg-gray-900 hover:bg-black font-black rounded-xl text-base px-5 py-4 transition-colors"
-    >
-      Buy Tickets
-    </Link>
-  )}
-  <p className="text-center text-xs text-gray-400 font-semibold mt-3 uppercase tracking-wider">
-    {Math.max(0, (event.capacity || 100) - (event.ticketsSold || 0))} seats remaining
-  </p>
-</div>
+                      {event.isActive === false ? (
+                        <button disabled className="block w-full text-center text-orange-500 bg-orange-50 border border-orange-200 font-black rounded-xl text-base px-5 py-4 cursor-not-allowed uppercase tracking-wider">
+                          Sales Paused
+                        </button>
+                      ) : ((event.capacity || 100) - (event.ticketsSold || 0)) <= 0 ? (
+                        <button disabled className="block w-full text-center text-gray-400 bg-gray-200 font-black rounded-xl text-base px-5 py-4 cursor-not-allowed uppercase tracking-wider">
+                          Sold Out
+                        </button>
+                      ) : (
+                        <Link 
+                          href={`/checkout?eventId=${event.id}`}
+                          className="block w-full text-center text-white bg-gray-900 hover:bg-black font-black rounded-xl text-base px-5 py-4 transition-colors"
+                        >
+                          Buy Tickets
+                        </Link>
+                      )}
+                      <p className="text-center text-xs text-gray-400 font-semibold mt-3 uppercase tracking-wider">
+                        {Math.max(0, (event.capacity || 100) - (event.ticketsSold || 0))} seats remaining
+                      </p>
+                    </div>
                   </div>
                 </div>
               );
