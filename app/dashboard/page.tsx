@@ -27,7 +27,7 @@ export default async function DashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-teal-100">
+   <main className="min-h-screen bg-gradient-to-br from-indigo-300 via-purple-300 to-teal-300">
       <nav className="bg-white/40 backdrop-blur-xl sticky top-0 z-50 border-b border-white/40 px-6 py-4 flex justify-between items-center shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center shadow-sm">
