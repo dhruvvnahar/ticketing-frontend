@@ -27,8 +27,8 @@ export default async function DashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FAFAFA]">
-      <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100 px-6 py-4 flex justify-between items-center">
+    <main className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-teal-100">
+      <nav className="bg-white/40 backdrop-blur-xl sticky top-0 z-50 border-b border-white/40 px-6 py-4 flex justify-between items-center shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center shadow-sm">
             <span className="text-white font-black text-sm">T</span>
@@ -42,27 +42,27 @@ export default async function DashboardPage() {
         <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-10">
           <div>
             <h2 className="text-3xl font-black tracking-tight text-gray-900 mb-1">Overview</h2>
-            <p className="text-gray-500 text-sm font-medium">Welcome back, track your events and sales.</p>
+            <p className="text-gray-700 text-sm font-medium">Welcome back, track your events and sales.</p>
           </div>
           <Link
             href="/dashboard/events/new"
-            className="group flex items-center gap-2 px-5 py-2.5 bg-black text-white font-semibold rounded-xl hover:bg-gray-800 hover:shadow-md transition-all text-sm"
+            className="group flex items-center gap-2 px-5 py-2.5 bg-black text-white font-semibold rounded-xl hover:bg-gray-800 hover:shadow-lg transition-all text-sm"
           >
             <span>Create New Event</span>
           </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-            <p className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Total Events</p>
+          <div className="bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-white shadow-sm">
+            <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Total Events</p>
             <p className="text-4xl font-black text-gray-900">{events.length}</p>
           </div>
-          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-            <p className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Total Revenue</p>
+          <div className="bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-white shadow-sm">
+            <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Total Revenue</p>
             <p className="text-4xl font-black text-gray-900">₹0</p>
           </div>
-          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-            <p className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Tickets Sold</p>
+          <div className="bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-white shadow-sm">
+            <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Tickets Sold</p>
             <p className="text-4xl font-black text-gray-900">0</p>
           </div>
         </div>
@@ -72,12 +72,12 @@ export default async function DashboardPage() {
         </div>
 
         {events.length === 0 ? (
-          <div className="bg-white rounded-3xl p-16 text-center border border-gray-100 shadow-sm">
+          <div className="bg-white/70 backdrop-blur-md rounded-3xl p-16 text-center border border-white shadow-sm">
             <h3 className="text-lg font-bold text-gray-900 mb-2">No events found</h3>
-            <p className="text-gray-500 mb-6">You haven't published any ticketed events yet.</p>
+            <p className="text-gray-600 mb-6">You haven't published any ticketed events yet.</p>
             <Link
               href="/dashboard/events/new"
-              className="text-sm font-bold text-white bg-black px-6 py-3 rounded-xl hover:bg-gray-800 transition-colors"
+              className="text-sm font-bold text-white bg-black px-6 py-3 rounded-xl hover:bg-gray-800 transition-colors shadow-lg"
             >
               Publish First Event
             </Link>
@@ -86,8 +86,8 @@ export default async function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {events.map((event: any) => (
               <Link key={event.id} href={`/dashboard/events/${event.id}`} className="group block h-full">
-                <div className="bg-white h-full rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden">
-                  <div className="relative h-48 w-full bg-gray-50 overflow-hidden">
+                <div className="bg-white/80 backdrop-blur-md h-full rounded-2xl border border-white shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden">
+                  <div className="relative h-48 w-full bg-gray-100 overflow-hidden">
                     {event.imageUrl ? (
                       <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     ) : (
@@ -95,11 +95,11 @@ export default async function DashboardPage() {
                     )}
                   </div>
                   <div className="p-5 flex flex-col flex-grow">
-                    <h3 className="text-xl font-black text-gray-900 group-hover:text-violet-600 transition-colors line-clamp-1">{event.title}</h3>
-                    <p className="text-gray-500 text-sm mt-2.5 font-medium">{event.date ? event.date.replace("T", " ").substring(0, 16) : "Date TBD"}</p>
-                    <div className="mt-auto pt-6 flex items-center justify-between border-t border-gray-50">
+                    <h3 className="text-xl font-black text-gray-900 group-hover:text-violet-700 transition-colors line-clamp-1">{event.title}</h3>
+                    <p className="text-gray-600 text-sm mt-2.5 font-medium">{event.date ? event.date.replace("T", " ").substring(0, 16) : "Date TBD"}</p>
+                    <div className="mt-auto pt-6 flex items-center justify-between border-t border-gray-200">
                       <p className="text-lg font-black text-gray-900">₹{event.price.toFixed(2)}</p>
-                      <span className="text-violet-600 text-sm font-bold">Manage &rarr;</span>
+                      <span className="text-violet-700 text-sm font-bold">Manage &rarr;</span>
                     </div>
                   </div>
                 </div>
