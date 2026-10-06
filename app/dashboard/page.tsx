@@ -14,6 +14,22 @@ export default async function DashboardPage() {
     (email) => email.id === user.primaryEmailAddressId
   )?.emailAddress || "no-email@provided.com";
 
+  // 1. Sync creator on load
+  try {
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/sync-creator`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        clerk_id: user.id,
+        email: primaryEmail,
+        name: user.firstName || "Creator",
+      }),
+    });
+  } catch (error) {
+    console.error("Failed to sync creator", error);
+  }
+
+  // 2. Fetch events for this user
   let events = [];
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/events?clerk_id=${user.id}`, {
@@ -24,6 +40,19 @@ export default async function DashboardPage() {
     }
   } catch (error) {
     console.error("Failed to fetch events", error);
+  }
+
+  // 3. Fetch live analytics
+  let analytics = { totalRevenue: 0, ticketsSold: 0 };
+  try {
+    const analyticsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/analytics?clerk_id=${user.id}`, {
+      cache: "no-store",
+    });
+    if (analyticsRes.ok) {
+      analytics = await analyticsRes.json();
+    }
+  } catch (error) {
+    console.error("Failed to fetch analytics", error);
   }
 
   return (
@@ -59,11 +88,13 @@ export default async function DashboardPage() {
           </div>
           <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/60 shadow-md">
             <p className="text-sm font-bold text-gray-600 uppercase tracking-wider mb-2">Total Revenue</p>
-            <p className="text-4xl font-black text-gray-900">₹0</p>
+            {/* Injecting Live Revenue */}
+            <p className="text-4xl font-black text-gray-900">₹{analytics.totalRevenue.toFixed(2)}</p>
           </div>
           <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/60 shadow-md">
             <p className="text-sm font-bold text-gray-600 uppercase tracking-wider mb-2">Tickets Sold</p>
-            <p className="text-4xl font-black text-gray-900">0</p>
+            {/* Injecting Live Ticket Count */}
+            <p className="text-4xl font-black text-gray-900">{analytics.ticketsSold}</p>
           </div>
         </div>
 
