@@ -16,7 +16,7 @@ export default async function DashboardPage() {
 
   // 1. Sync creator on load
   try {
-    await fetch("http://localhost:8000/api/sync-creator", {
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/sync-creator`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -32,7 +32,7 @@ export default async function DashboardPage() {
   // 2. Fetch events for this user from FastAPI
   let events = [];
   try {
-    const res = await fetch(`http://localhost:8000/api/events?clerk_id=${user.id}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/events?clerk_id=${user.id}`, {
       cache: "no-store",
     });
     if (res.ok) {
