@@ -2,13 +2,19 @@ import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 
-export default async function EventAttendeesPage({ params }: { params: { eventId: string } }) {
+// Change 1: Use 'any' for props to avoid strict type errors with Next.js 15 promises
+export default async function EventAttendeesPage(props: any) {
   const user = await currentUser();
   if (!user) redirect("/sign-in");
 
+  // Change 2: Await the params (Required for Next.js 15) and handle folder naming fallbacks
+  const resolvedParams = await props.params;
+  const actualEventId = resolvedParams.eventId || resolvedParams.id;
+
   let tickets = [];
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/events/${params.eventId}/tickets`, {
+    // Change 3: Inject the safely resolved ID into the fetch URL
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/events/${actualEventId}/tickets`, {
       cache: "no-store",
     });
     if (res.ok) {
