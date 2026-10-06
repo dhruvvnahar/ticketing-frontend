@@ -89,7 +89,11 @@ export default async function DashboardPage() {
                   </div>
                 )}
                 <div className="flex-grow">
-                  <h3 className="text-lg font-bold text-gray-900">{event.title}</h3>
+                  <Link href={`/dashboard/events/${event.id}`}>
+                    <h3 className="text-lg font-bold text-gray-900 hover:text-violet-600 transition-colors underline decoration-2 decoration-transparent hover:decoration-violet-200">
+                      {event.title}
+                    </h3>
+                  </Link>
                   <p className="text-xs text-gray-500 mt-0.5">{event.date ? event.date.replace("T", " ") : ""}</p>
                   <p className="text-sm font-black text-gray-900 mt-2">₹{event.price.toFixed(2)}</p>
                 </div>
