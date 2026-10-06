@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 
 export default function VerifyTicketPage() {
+  const { user, isLoaded } = useUser();
   const params = useParams();
   const ticketId = params.ticketId;
   
@@ -14,13 +16,14 @@ export default function VerifyTicketPage() {
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' | 'warning' } | null>(null);
 
   useEffect(() => {
-    if (!ticketId) return;
+    if (!isLoaded || !user || !ticketId) return;
 
     const fetchTicket = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tickets/${ticketId}`);
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://ticketing-backend-l9xz.onrender.com";
+        const res = await fetch(`${baseUrl}/api/tickets/${ticketId}?clerk_id=${user.id}`);
         if (!res.ok) {
-          throw new Error("Ticket not found");
+          throw new Error("Ticket not found or unauthorized");
         }
         const data = await res.json();
         setTicket(data);
@@ -33,14 +36,18 @@ export default function VerifyTicketPage() {
     };
 
     fetchTicket();
-  }, [ticketId]);
+  }, [ticketId, user, isLoaded]);
 
   const handleCheckIn = async () => {
+    if (!user) return;
     setCheckingIn(true);
     setMessage(null);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tickets/${ticketId}/check-in`, {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://ticketing-backend-l9xz.onrender.com";
+      const res = await fetch(`${baseUrl}/api/tickets/${ticketId}/check-in`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clerk_id: user.id }),
       });
       const data = await res.json();
       
@@ -62,6 +69,28 @@ export default function VerifyTicketPage() {
     }
   };
 
+  if (!isLoaded) {
+    return (
+      <main className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-violet-200 border-t-violet-600 rounded-full animate-spin"></div>
+      </main>
+    );
+  }
+
+  if (!user) {
+    return (
+      <main className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-6 text-center">
+        <div className="bg-white text-gray-900 rounded-3xl shadow-2xl p-8 max-w-md w-full">
+          <h1 className="text-2xl font-black mb-2 text-red-600">Access Restricted 🔒</h1>
+          <p className="text-gray-500 text-sm mb-6">You must be logged in as an event creator to scan and verify tickets.</p>
+          <a href="/sign-in" className="block w-full bg-black text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition-colors">
+            Sign In to Scan
+          </a>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-6">
       <div className="bg-white text-gray-900 rounded-3xl shadow-2xl p-8 max-w-md w-full text-center">
@@ -74,12 +103,12 @@ export default function VerifyTicketPage() {
           </div>
         ) : error || !ticket ? (
           <div className="bg-red-50 text-red-600 p-6 rounded-2xl font-bold">
-            ❌ Invalid Ticket or Not Found
+            ❌ Invalid Ticket, Not Found, or Unauthorized Event
           </div>
         ) : (
           <div className="space-y-6 text-left">
             {/* Status Banner */}
-            {ticket.status === "checked-in" ? (
+            {ticket.status === "checked-in" || ticket.status === "USED" ? (
               <div className="bg-amber-50 text-amber-700 p-4 rounded-2xl font-bold text-center">
                 ⚠️ Warning: Ticket Already Scanned / Used
               </div>
@@ -91,8 +120,8 @@ export default function VerifyTicketPage() {
 
             {/* Attendee Details */}
             <div className="border-t border-gray-100 pt-4 space-y-2 text-sm font-medium">
-              <p><span className="text-gray-400">Attendee:</span> <strong className="text-gray-800">{ticket.buyer_name}</strong></p>
-              <p><span className="text-gray-400">Event:</span> <strong className="text-gray-800">{ticket.event_title}</strong></p>
+              <p><span className="text-gray-400">Attendee:</span> <strong className="text-gray-800">{ticket.buyerName || ticket.buyer_name}</strong></p>
+              <p><span className="text-gray-400">Event:</span> <strong className="text-gray-800">{ticket.eventTitle || ticket.event_title}</strong></p>
             </div>
 
             {/* Action Feedback Message */}
@@ -103,7 +132,7 @@ export default function VerifyTicketPage() {
             )}
 
             {/* Check-In Button */}
-            {ticket.status !== "checked-in" && (
+            {ticket.status !== "checked-in" && ticket.status !== "USED" && (
               <button
                 onClick={handleCheckIn}
                 disabled={checkingIn}
