@@ -59,6 +59,7 @@ export default function CheckoutForm({ event }: { event: any }) {
   const available = (event.capacity || 100) - (event.ticketsSold || 0);
   const isSoldOut = available <= 0;
   const tooManySelected = attendees.length > available;
+  const isPaused = event.isActive === false; // <-- Add this line
 
   return (
     <form onSubmit={handleCheckout} className="max-w-2xl mx-auto space-y-8">
@@ -129,7 +130,15 @@ export default function CheckoutForm({ event }: { event: any }) {
         </div>
       </div>
 
-      {(() => {
+     {(() => {
+        if (isPaused) {
+          return (
+            <button disabled type="button" className="w-full bg-orange-100 text-orange-600 py-4 rounded-xl font-bold text-lg cursor-not-allowed border border-orange-200">
+              Sales Paused
+            </button>
+          );
+        }
+
         if (isSoldOut) {
           return (
             <button disabled type="button" className="w-full bg-gray-300 text-gray-500 py-4 rounded-xl font-black text-lg cursor-not-allowed uppercase tracking-wider">
@@ -137,6 +146,7 @@ export default function CheckoutForm({ event }: { event: any }) {
             </button>
           );
         }
+       
 
         if (tooManySelected) {
           return (
