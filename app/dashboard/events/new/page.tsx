@@ -16,7 +16,7 @@ export default function NewEventPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [totalSeats, setTotalSeats] = useState(100);
+  const [totalSeats, setTotalSeats] = useState<number | "">(100);
 
   if (!isLoaded) {
     return <div className="p-8 text-center text-gray-500">Loading...</div>;
@@ -148,14 +148,14 @@ export default function NewEventPage() {
           <div>
   <label className="block text-sm font-black text-gray-700 mb-1">Total Tickets Available</label>
   <input 
-    required
-    type="number" 
-    min="1"
-    value={totalSeats}
-    onChange={(e) => setTotalSeats(parseInt(e.target.value) || 1)}
-    className="w-full bg-gray-50/50 border border-gray-200 text-gray-900 rounded-2xl focus:bg-white focus:ring-4 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 block p-4 outline-none font-medium"
-    placeholder="100"
-  />
+  required
+  type="number" 
+  min="1"
+  value={totalSeats}
+  onChange={(e) => setTotalSeats(e.target.value === "" ? "" : parseInt(e.target.value))}
+  className="w-full bg-gray-50/50 border border-gray-200 text-gray-900 rounded-2xl focus:bg-white focus:ring-4 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 block p-4 outline-none font-medium"
+  placeholder="100"
+/>
 </div>
 
           <button
