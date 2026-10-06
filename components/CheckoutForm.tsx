@@ -54,6 +54,11 @@ export default function CheckoutForm({ event }: { event: any }) {
   };
 
   const totalAmount = event.price * attendees.length;
+  
+  // Calculate capacity
+  const available = (event.capacity || 100) - (event.ticketsSold || 0);
+  const isSoldOut = available <= 0;
+  const tooManySelected = attendees.length > available;
 
   return (
     <form onSubmit={handleCheckout} className="max-w-2xl mx-auto space-y-8">
@@ -113,7 +118,8 @@ export default function CheckoutForm({ event }: { event: any }) {
         <button 
           type="button" 
           onClick={addTicket}
-          className="text-violet-600 font-bold hover:text-violet-800 transition-colors"
+          disabled={tooManySelected || isSoldOut || attendees.length >= available}
+          className="text-violet-600 font-bold hover:text-violet-800 transition-colors disabled:opacity-30 disabled:hover:text-violet-600"
         >
           + Add Another Ticket
         </button>
@@ -123,13 +129,33 @@ export default function CheckoutForm({ event }: { event: any }) {
         </div>
       </div>
 
-      <button 
-        type="submit" 
-        disabled={isProcessing}
-        className="w-full bg-black text-white py-4 rounded-xl font-bold text-lg hover:bg-gray-800 disabled:opacity-50 transition-colors shadow-md hover:shadow-lg"
-      >
-        {isProcessing ? "Processing Order..." : `Pay ₹${totalAmount.toFixed(2)}`}
-      </button>
+      {(() => {
+        if (isSoldOut) {
+          return (
+            <button disabled type="button" className="w-full bg-gray-300 text-gray-500 py-4 rounded-xl font-black text-lg cursor-not-allowed uppercase tracking-wider">
+              Sold Out
+            </button>
+          );
+        }
+
+        if (tooManySelected) {
+          return (
+            <button disabled type="button" className="w-full bg-red-100 text-red-600 py-4 rounded-xl font-bold text-lg cursor-not-allowed border border-red-200">
+              Only {available} ticket{available === 1 ? '' : 's'} left
+            </button>
+          );
+        }
+
+        return (
+          <button 
+            type="submit" 
+            disabled={isProcessing}
+            className="w-full bg-black text-white py-4 rounded-xl font-bold text-lg hover:bg-gray-800 disabled:opacity-50 transition-colors shadow-md hover:shadow-lg"
+          >
+            {isProcessing ? "Processing Order..." : `Pay ₹${totalAmount.toFixed(2)}`}
+          </button>
+        );
+      })()}
     </form>
   );
 }
