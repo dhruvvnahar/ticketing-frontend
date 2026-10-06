@@ -94,6 +94,31 @@ export default function DashboardPage() {
     }
   };
 
+  // Handle CSV Download (Moved above the loading return!)
+  const handleDownloadCSV = async (eventId: string, eventTitle: string) => {
+    if (!user) return;
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://ticketing-backend-l9xz.onrender.com";
+    
+    try {
+      const res = await fetch(`${baseUrl}/api/events/${eventId}/attendees/csv?clerk_id=${user.id}`);
+      if (!res.ok) throw new Error("Failed to download CSV");
+      
+      // Convert response to a blob and trigger browser download
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${eventTitle.replace(/\s+/g, "_")}_Attendees.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("CSV download error:", error);
+      alert("Failed to download attendees list.");
+    }
+  };
+
   // Loading State
   if (!isLoaded || loading) {
     return (
@@ -188,27 +213,36 @@ export default function DashboardPage() {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex gap-2">
+                    <div className="flex flex-col gap-2">
                       <button 
-                        onClick={() => handleTogglePause(event.id, event.isActive)}
-                        className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold transition-colors shadow-sm ${
-                          event.isActive === false 
-                            ? "bg-green-100 text-green-700 hover:bg-green-200" 
-                            : "bg-orange-100 text-orange-700 hover:bg-orange-200"
-                        }`}
+                        onClick={(e) => { e.preventDefault(); handleDownloadCSV(event.id, event.title); }}
+                        className="w-full px-3 py-2 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors shadow-sm flex items-center justify-center gap-1.5"
                       >
-                        {event.isActive === false ? "▶ Resume" : "⏸ Pause"}
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        Export Attendee List
                       </button>
-                      
-                      <button 
-                        onClick={() => handleDelete(event.id)}
-                        className="flex-1 px-3 py-2 rounded-lg text-xs font-bold bg-red-50 text-red-600 hover:bg-red-100 transition-colors shadow-sm"
-                      >
-                        Delete
-                      </button>
-                    </div>
 
-                  </div>
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={(e) => { e.preventDefault(); handleTogglePause(event.id, event.isActive); }}
+                          className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold transition-colors shadow-sm ${
+                            event.isActive === false 
+                              ? "bg-green-100 text-green-700 hover:bg-green-200" 
+                              : "bg-orange-100 text-orange-700 hover:bg-orange-200"
+                          }`}
+                        >
+                          {event.isActive === false ? "▶ Resume" : "⏸ Pause"}
+                        </button>
+                        
+                        <button 
+                          onClick={(e) => { e.preventDefault(); handleDelete(event.id); }}
+                          className="flex-1 px-3 py-2 rounded-lg text-xs font-bold bg-red-50 text-red-600 hover:bg-red-100 transition-colors shadow-sm"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div> {/* <--- THIS CLOSING DIV WAS MISSING */}
                 </div>
               </div>
             ))}
