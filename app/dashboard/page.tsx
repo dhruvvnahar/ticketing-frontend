@@ -1,58 +1,106 @@
-import { UserButton } from "@clerk/nextjs";
-import { currentUser } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useEffect, useState } from "react";
+import { UserButton, useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default async function DashboardPage() {
-  const user = await currentUser();
+export default function DashboardPage() {
+  const { user, isLoaded } = useUser();
+  const router = useRouter();
   
-  if (!user) {
-    redirect("/sign-in");
-  }
+  const [events, setEvents] = useState<any[]>([]);
+  const [analytics, setAnalytics] = useState({ totalRevenue: 0, ticketsSold: 0 });
+  const [loading, setLoading] = useState(true);
 
-  const primaryEmail = user.emailAddresses.find(
-    (email) => email.id === user.primaryEmailAddressId
-  )?.emailAddress || "no-email@provided.com";
-
-  // 1. Sync creator on load
-  try {
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/sync-creator`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        clerk_id: user.id,
-        email: primaryEmail,
-        name: user.firstName || "Creator",
-      }),
-    });
-  } catch (error) {
-    console.error("Failed to sync creator", error);
-  }
-
-  // 2. Fetch events for this user
-  let events = [];
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/events?clerk_id=${user.id}`, {
-      cache: "no-store",
-    });
-    if (res.ok) {
-      events = await res.json();
+  // Fetch all data when the component loads
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (!user) {
+      router.push("/sign-in");
+      return;
     }
-  } catch (error) {
-    console.error("Failed to fetch events", error);
-  }
 
-  // 3. Fetch live analytics
-  let analytics = { totalRevenue: 0, ticketsSold: 0 };
-  try {
-    const analyticsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/analytics?clerk_id=${user.id}`, {
-      cache: "no-store",
-    });
-    if (analyticsRes.ok) {
-      analytics = await analyticsRes.json();
+    const fetchData = async () => {
+      try {
+        const primaryEmail = user.primaryEmailAddress?.emailAddress || "no-email@provided.com";
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://ticketing-backend-l9xz.onrender.com";
+
+        // 1. Sync creator
+        await fetch(`${baseUrl}/api/sync-creator`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clerk_id: user.id,
+            email: primaryEmail,
+            name: user.fullName || "Creator",
+          }),
+        });
+
+        // 2. Fetch events
+        const eventsRes = await fetch(`${baseUrl}/api/events?clerk_id=${user.id}`);
+        if (eventsRes.ok) {
+          setEvents(await eventsRes.json());
+        }
+
+        // 3. Fetch analytics
+        const analyticsRes = await fetch(`${baseUrl}/api/analytics?clerk_id=${user.id}`);
+        if (analyticsRes.ok) {
+          setAnalytics(await analyticsRes.json());
+        }
+      } catch (error) {
+        console.error("Error fetching data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [user, isLoaded, router]);
+
+  // Handle Pause/Resume
+  const handleTogglePause = async (eventId: string, currentStatus: boolean) => {
+    if (!user) return;
+    
+    // Optimistic UI update (instantly changes the button without waiting for reload)
+    setEvents(events.map(e => e.id === eventId ? { ...e, isActive: !currentStatus } : e));
+    
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://ticketing-backend-l9xz.onrender.com";
+    try {
+      await fetch(`${baseUrl}/api/events/${eventId}/toggle?clerk_id=${user.id}`, {
+        method: "PATCH",
+      });
+    } catch (error) {
+      console.error("Failed to toggle event status", error);
     }
-  } catch (error) {
-    console.error("Failed to fetch analytics", error);
+  };
+
+  // Handle Delete
+  const handleDelete = async (eventId: string) => {
+    if (!user) return;
+    const confirmed = window.confirm("Are you sure you want to delete this event? This will also delete all associated tickets.");
+    if (!confirmed) return;
+
+    // Optimistic UI update (instantly removes from screen)
+    setEvents(events.filter(e => e.id !== eventId));
+
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://ticketing-backend-l9xz.onrender.com";
+    try {
+      await fetch(`${baseUrl}/api/events/${eventId}?clerk_id=${user.id}`, {
+        method: "DELETE",
+      });
+    } catch (error) {
+      console.error("Failed to delete event", error);
+    }
+  };
+
+  // Loading State
+  if (!isLoaded || loading) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-violet-200 via-pink-100 to-blue-200 flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-white border-t-black rounded-full animate-spin"></div>
+      </main>
+    );
   }
 
   return (
@@ -88,13 +136,11 @@ export default async function DashboardPage() {
           </div>
           <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/60 shadow-md">
             <p className="text-sm font-bold text-gray-600 uppercase tracking-wider mb-2">Total Revenue</p>
-            {/* Injecting Live Revenue */}
-            <p className="text-4xl font-black text-gray-900">₹{analytics.totalRevenue.toFixed(2)}</p>
+            <p className="text-4xl font-black text-gray-900">₹{(analytics.totalRevenue || 0).toFixed(2)}</p>
           </div>
           <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/60 shadow-md">
             <p className="text-sm font-bold text-gray-600 uppercase tracking-wider mb-2">Tickets Sold</p>
-            {/* Injecting Live Ticket Count */}
-            <p className="text-4xl font-black text-gray-900">{analytics.ticketsSold}</p>
+            <p className="text-4xl font-black text-gray-900">{analytics.ticketsSold || 0}</p>
           </div>
         </div>
 
@@ -116,25 +162,55 @@ export default async function DashboardPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {events.map((event: any) => (
-              <Link key={event.id} href={`/dashboard/events/${event.id}`} className="group block h-full">
-                <div className="bg-white/60 backdrop-blur-md h-full rounded-2xl border border-white/60 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden">
-                  <div className="relative h-48 w-full bg-gray-100 overflow-hidden">
-                    {event.imageUrl ? (
-                      <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs font-semibold">No Image</div>
-                    )}
-                  </div>
-                  <div className="p-5 flex flex-col flex-grow">
-                    <h3 className="text-xl font-black text-gray-900 group-hover:text-violet-700 transition-colors line-clamp-1">{event.title}</h3>
-                    <p className="text-gray-700 text-sm mt-2.5 font-medium">{event.date ? event.date.replace("T", " ").substring(0, 16) : "Date TBD"}</p>
-                    <div className="mt-auto pt-6 flex items-center justify-between border-t border-white/50">
-                      <p className="text-lg font-black text-gray-900">₹{event.price.toFixed(2)}</p>
-                      <span className="text-violet-700 text-sm font-bold">Manage &rarr;</span>
+              <div key={event.id} className="bg-white/60 backdrop-blur-md h-full rounded-2xl border border-white/60 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden">
+                
+                {/* Image Link */}
+                <Link href={`/dashboard/events/${event.id}`} className="group block relative h-48 w-full bg-gray-100 overflow-hidden">
+                  {event.imageUrl ? (
+                    <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs font-semibold">No Image</div>
+                  )}
+                </Link>
+                
+                <div className="p-5 flex flex-col flex-grow">
+                  <Link href={`/dashboard/events/${event.id}`}>
+                    <h3 className="text-xl font-black text-gray-900 hover:text-violet-700 transition-colors line-clamp-1">{event.title}</h3>
+                  </Link>
+                  <p className="text-gray-700 text-sm mt-2.5 font-medium">{event.date ? event.date.replace("T", " ").substring(0, 16) : "Date TBD"}</p>
+                  
+                  <div className="mt-auto pt-6 flex flex-col gap-4 border-t border-white/50">
+                    <div className="flex items-center justify-between">
+                      <p className="text-lg font-black text-gray-900">₹{(event.price || 0).toFixed(2)}</p>
+                      <Link href={`/dashboard/events/${event.id}`} className="text-violet-700 text-sm font-bold hover:underline">
+                        Manage &rarr;
+                      </Link>
                     </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => handleTogglePause(event.id, event.isActive)}
+                        className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold transition-colors shadow-sm ${
+                          event.isActive === false 
+                            ? "bg-green-100 text-green-700 hover:bg-green-200" 
+                            : "bg-orange-100 text-orange-700 hover:bg-orange-200"
+                        }`}
+                      >
+                        {event.isActive === false ? "▶ Resume" : "⏸ Pause"}
+                      </button>
+                      
+                      <button 
+                        onClick={() => handleDelete(event.id)}
+                        className="flex-1 px-3 py-2 rounded-lg text-xs font-bold bg-red-50 text-red-600 hover:bg-red-100 transition-colors shadow-sm"
+                      >
+                        Delete
+                      </button>
+                    </div>
+
                   </div>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         )}
