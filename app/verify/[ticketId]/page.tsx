@@ -83,7 +83,8 @@ export default function VerifyTicketPage() {
         <div className="bg-white text-gray-900 rounded-3xl shadow-2xl p-8 max-w-md w-full">
           <h1 className="text-2xl font-black mb-2 text-red-600">Access Restricted 🔒</h1>
           <p className="text-gray-500 text-sm mb-6">You must be logged in as an event creator to scan and verify tickets.</p>
-          <a href="/sign-in" className="block w-full bg-black text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition-colors">
+          {/* Added redirect_url parameter so Clerk returns the user to this specific ticket */}
+          <a href={`/sign-in?redirect_url=/verify/${ticketId}`} className="block w-full bg-black text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition-colors">
             Sign In to Scan
           </a>
         </div>
@@ -108,7 +109,7 @@ export default function VerifyTicketPage() {
         ) : (
           <div className="space-y-6 text-left">
             {/* Status Banner */}
-            {ticket.status === "checked-in" || ticket.status === "USED" ? (
+            {ticket?.status === "checked-in" || ticket?.status === "USED" ? (
               <div className="bg-amber-50 text-amber-700 p-4 rounded-2xl font-bold text-center">
                 ⚠️ Warning: Ticket Already Scanned / Used
               </div>
