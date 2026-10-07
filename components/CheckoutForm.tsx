@@ -63,38 +63,11 @@ export default function CheckoutForm({ event }: { event: any }) {
           mode: "sandbox", 
         });
         
-        // 3. Open the secure payment modal overlay and await completion
-        const result = await cashfree.checkout({
+        // 3. Open full-page secure payment redirect (_self) to avoid mobile iframe blocks
+        await cashfree.checkout({
           paymentSessionId: orderData.payment_session_id,
-          redirectTarget: "_modal",
+          redirectTarget: "_self",
         });
-
-        // This block runs AFTER the user finishes paying in the modal
-        if (result && result.error) {
-          alert("Payment failed: " + result.error.message);
-          setIsProcessing(false);
-          return;
-        }
-
-        // 4. Payment was successful! Now call your backend to create tickets & email QR codes
-        const ticketRes = await fetch(`${baseUrl}/api/create-ticket-order`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            eventId: event.id,
-            attendees: attendees
-          }),
-        });
-
-        const ticketData = await ticketRes.json();
-
-        if (ticketData.success) {
-          // 5. Navigate to your success page
-          router.push("/payment-status");
-        } else {
-          alert("Payment succeeded, but ticket generation failed: " + ticketData.message);
-          setIsProcessing(false);
-        }
 
       } else {
         alert("Failed to initialize payment gateway: " + (orderData.message || "Unknown error"));
@@ -137,7 +110,7 @@ export default function CheckoutForm({ event }: { event: any }) {
                 type="text" 
                 value={attendee.buyerName}
                 onChange={(e) => updateAttendee(index, "buyerName", e.target.value)}
-                className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-violet-600 outline-none transition-all"
+                className="w-full border rounded-xl p-3 text-gray-950 font-medium bg-white focus:ring-2 focus:ring-violet-600 outline-none transition-all"
                 placeholder="Jane Doe"
               />
             </div>
@@ -148,7 +121,7 @@ export default function CheckoutForm({ event }: { event: any }) {
                 type="email" 
                 value={attendee.buyerEmail}
                 onChange={(e) => updateAttendee(index, "buyerEmail", e.target.value)}
-                className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-violet-600 outline-none transition-all"
+                className="w-full border rounded-xl p-3 text-gray-950 font-medium bg-white focus:ring-2 focus:ring-violet-600 outline-none transition-all"
                 placeholder="jane@example.com"
               />
             </div>
@@ -159,7 +132,7 @@ export default function CheckoutForm({ event }: { event: any }) {
                 type="tel" 
                 value={attendee.buyerPhone}
                 onChange={(e) => updateAttendee(index, "buyerPhone", e.target.value)}
-                className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-violet-600 outline-none transition-all"
+                className="w-full border rounded-xl p-3 text-gray-950 font-medium bg-white focus:ring-2 focus:ring-violet-600 outline-none transition-all"
                 placeholder="9876543210"
               />
             </div>
@@ -213,7 +186,7 @@ export default function CheckoutForm({ event }: { event: any }) {
             disabled={isProcessing}
             className="w-full bg-black text-white py-4 rounded-xl font-bold text-lg hover:bg-gray-800 disabled:opacity-50 transition-colors shadow-md hover:shadow-lg"
           >
-            {isProcessing ? "Opening Secure Payment..." : `Pay ₹${totalAmount.toFixed(2)}`}
+            {isProcessing ? "Redirecting to Secure Payment..." : `Pay ₹${totalAmount.toFixed(2)}`}
           </button>
         );
       })()}
