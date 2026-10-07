@@ -14,6 +14,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   // Fetch all data when the component loads
+  // Fetch all data when the component loads and poll every 5 seconds for real-time updates
   useEffect(() => {
     if (!isLoaded) return;
     if (!user) {
@@ -55,7 +56,12 @@ export default function DashboardPage() {
       }
     };
 
+    // Initial fetch
     fetchData();
+
+    // Poll every 5 seconds for live sales & analytics updates
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
   }, [user, isLoaded, router]);
 
   // Handle Pause/Resume
