@@ -7,7 +7,6 @@ import Link from "next/link";
 
 export default function ContinuousScannerPage() {
   const { user, isLoaded } = useUser();
-  const [lastScanned, setLastScanned] = useState<string | null>(null);
   const [status, setStatus] = useState<{ text: string; type: "success" | "error" | "warning" } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -21,7 +20,6 @@ export default function ContinuousScannerPage() {
       const parts = scannedText.split("/verify/");
       const ticketId = parts.length > 1 ? parts[1] : scannedText;
 
-      setLastScanned(ticketId);
 
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://ticketing-backend-l9xz.onrender.com";
       const res = await fetch(`${baseUrl}/api/tickets/${ticketId}/check-in`, {
@@ -91,11 +89,12 @@ export default function ContinuousScannerPage() {
       <div className="w-full max-w-md bg-black rounded-3xl overflow-hidden shadow-2xl border border-gray-800 relative">
         <div className="aspect-square relative">
           <Scanner
-            onResult={(text) => processTicket(text)}
-            onError={(error) => console.error(error)}
-            options={{
-              delayBetweenScanAttempts: 500,
+            onScan={(detectedCodes) => {
+              const scannedText = detectedCodes[0]?.rawValue;
+              if (scannedText) void processTicket(scannedText);
             }}
+            onError={(error) => console.error(error)}
+            scanDelay={500}
           />
 
           {isProcessing && status && (
