@@ -7,7 +7,7 @@ const load: (options: { mode: "sandbox" | "production" }) => Promise<{
   checkout: (options: {
     paymentSessionId: string;
     redirectTarget: string;
-  }) => void;
+  }) => Promise<any>;
 }> = require("@cashfreepayments/cashfree-js").load;
 
 export default function CheckoutForm({ event }: { event: any }) {
@@ -63,11 +63,38 @@ export default function CheckoutForm({ event }: { event: any }) {
           mode: "sandbox", 
         });
         
-        // 3. Open the secure payment modal overlay
-        cashfree.checkout({
+        // 3. Open the secure payment modal overlay and await completion
+        const result = await cashfree.checkout({
           paymentSessionId: orderData.payment_session_id,
-          redirectTarget: "_modal", 
+          redirectTarget: "_modal",
         });
+
+        // This block runs AFTER the user finishes paying in the modal
+        if (result && result.error) {
+          alert("Payment failed: " + result.error.message);
+          setIsProcessing(false);
+          return;
+        }
+
+        // 4. Payment was successful! Now call your backend to create tickets & email QR codes
+        const ticketRes = await fetch(`${baseUrl}/api/create-ticket-order`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            eventId: event.id,
+            attendees: attendees
+          }),
+        });
+
+        const ticketData = await ticketRes.json();
+
+        if (ticketData.success) {
+          // 5. Navigate to your success page
+          router.push("/payment-status");
+        } else {
+          alert("Payment succeeded, but ticket generation failed: " + ticketData.message);
+          setIsProcessing(false);
+        }
 
       } else {
         alert("Failed to initialize payment gateway: " + (orderData.message || "Unknown error"));
