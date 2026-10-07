@@ -2,6 +2,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+// Cashfree's package does not include TypeScript declarations.
+const load: (options: { mode: "sandbox" | "production" }) => Promise<{
+  checkout: (options: {
+    paymentSessionId: string;
+    redirectTarget: string;
+  }) => void;
+}> = require("@cashfreepayments/cashfree-js").load;
+
 export default function CheckoutForm({ event }: { event: any }) {
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -26,40 +34,57 @@ export default function CheckoutForm({ event }: { event: any }) {
     setAttendees(newAttendees);
   };
 
+  const totalAmount = event.price * attendees.length;
+
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/create-ticket-order`, {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://ticketing-backend-l9xz.onrender.com";
+      
+      // 1. Generate the Cashfree Order Session on the Backend
+      const orderRes = await fetch(`${baseUrl}/api/create-cashfree-order`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          eventId: event.id,
-          attendees: attendees
+          amount: totalAmount,
+          customer_name: attendees[0].buyerName,
+          customer_email: attendees[0].buyerEmail,
+          customer_phone: attendees[0].buyerPhone || "9999999999"
         }),
       });
 
-      if (res.ok) {
-        router.push("/success");
+      const orderData = await orderRes.json();
+
+      if (orderData.success && orderData.payment_session_id) {
+        // 2. Initialize the Cashfree SDK in Sandbox mode
+        const cashfree = await load({
+          mode: "sandbox", 
+        });
+        
+        // 3. Open the secure payment modal overlay
+        cashfree.checkout({
+          paymentSessionId: orderData.payment_session_id,
+          redirectTarget: "_modal", 
+        });
+
       } else {
-        const errorData = await res.json();
-        alert(`Checkout failed: ${errorData.message}`);
+        alert("Failed to initialize payment gateway: " + (orderData.message || "Unknown error"));
+        setIsProcessing(false);
       }
     } catch (error) {
       console.error("Checkout failed", error);
-    } finally {
+      alert("Network error. Please try again.");
       setIsProcessing(false);
     }
   };
-
-  const totalAmount = event.price * attendees.length;
   
   // Calculate capacity
   const available = (event.capacity || 100) - (event.ticketsSold || 0);
   const isSoldOut = available <= 0;
   const tooManySelected = attendees.length > available;
-  const isPaused = event.isActive === false; // <-- Add this line
+  const isPaused = event.isActive === false; 
 
   return (
     <form onSubmit={handleCheckout} className="max-w-2xl mx-auto space-y-8">
@@ -108,7 +133,7 @@ export default function CheckoutForm({ event }: { event: any }) {
                 value={attendee.buyerPhone}
                 onChange={(e) => updateAttendee(index, "buyerPhone", e.target.value)}
                 className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-violet-600 outline-none transition-all"
-                placeholder="+91 98765 43210"
+                placeholder="9876543210"
               />
             </div>
           </div>
@@ -147,7 +172,6 @@ export default function CheckoutForm({ event }: { event: any }) {
           );
         }
        
-
         if (tooManySelected) {
           return (
             <button disabled type="button" className="w-full bg-red-100 text-red-600 py-4 rounded-xl font-bold text-lg cursor-not-allowed border border-red-200">
@@ -162,7 +186,7 @@ export default function CheckoutForm({ event }: { event: any }) {
             disabled={isProcessing}
             className="w-full bg-black text-white py-4 rounded-xl font-bold text-lg hover:bg-gray-800 disabled:opacity-50 transition-colors shadow-md hover:shadow-lg"
           >
-            {isProcessing ? "Processing Order..." : `Pay ₹${totalAmount.toFixed(2)}`}
+            {isProcessing ? "Opening Secure Payment..." : `Pay ₹${totalAmount.toFixed(2)}`}
           </button>
         );
       })()}
