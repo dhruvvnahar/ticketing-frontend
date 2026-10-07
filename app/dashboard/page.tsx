@@ -146,12 +146,21 @@ export default function DashboardPage() {
             <h2 className="text-3xl font-black tracking-tight text-gray-900 mb-1">Overview</h2>
             <p className="text-gray-700 text-sm font-medium">Welcome back, track your events and sales.</p>
           </div>
-          <Link
-            href="/dashboard/events/new"
-            className="group flex items-center gap-2 px-5 py-2.5 bg-black text-white font-semibold rounded-xl hover:bg-gray-800 hover:shadow-lg transition-all text-sm"
-          >
-            <span>Create New Event</span>
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/dashboard/scanner"
+              className="group flex items-center gap-2 px-5 py-2.5 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-700 hover:shadow-lg transition-all text-sm shadow-md"
+            >
+              <span>📷 Open Scanner</span>
+            </Link>
+
+            <Link
+              href="/dashboard/events/new"
+              className="group flex items-center gap-2 px-5 py-2.5 bg-black text-white font-semibold rounded-xl hover:bg-gray-800 hover:shadow-lg transition-all text-sm"
+            >
+              <span>Create New Event</span>
+            </Link>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
